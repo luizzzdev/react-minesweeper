@@ -102,4 +102,4 @@ const printBoard = board => {
   });
 };
 
-export { useBoard, isBomb };
+export { useBoard, isBomb, generateAroundFields };

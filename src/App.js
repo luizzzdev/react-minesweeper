@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import logo from './logo.svg';
 import './App.css';
-import { useBoard, isBomb } from './minesweeper';
+import { useBoard, isBomb, generateAroundFields } from './minesweeper';
 
 function Line({ children }) {
   return (
@@ -40,7 +40,22 @@ function Cell({ children, cell, onClick, onMarkAsBomb }) {
   );
 }
 
+const isNextToCell = (previousBoardCell, cell) => {
+  const aroundCell = generateAroundFields(cell.line, cell.column)
+  if(previousBoardCell.bombsAround === 0 && cell.bombsAround === 0) {
+    // debugger
+  }
+  return aroundCell.some((around) => around[0] === previousBoardCell.line && previousBoardCell.column === around[1])
+}
+
+const isZeroAndNextToSelectedCell = (previousBoardCell, cell) => {
+  const isZeroAround = cell.bombsAround === 0
+  return cell.bombsAround === 0 && previousBoardCell.bombsAround === 0 && isNextToCell(previousBoardCell, cell)
+}
+
 const getCellState = cell => {
+  return cell.isBomb? 'Bomb' : cell.bombsAround
+
   if (cell.markedAsBomb) return 'Bomb';
 
   if (!cell.isOpen) return '';
@@ -49,10 +64,12 @@ const getCellState = cell => {
 };
 
 function App() {
-  const { board, bombs, setBoardState } = useBoard(10);
+  const { board, bombs, setBoardState } = useBoard(6);
   const [didLoose, setDidLoose] = useState(false);
 
   const selectCell = cell => {
+    if (cell.markedAsBomb) return;
+
     const cellIsBomb = isBomb(cell.line, cell.column, bombs);
 
     if (cellIsBomb) {
@@ -60,7 +77,6 @@ function App() {
       return;
     }
 
-    if (cell.markedAsBomb) return;
 
     setBoardState(previousBoard => {
       return previousBoard.map(line => {
@@ -68,9 +84,13 @@ function App() {
           const isTheCellSelected =
             previousBoardCell.line === cell.line &&
             previousBoardCell.column === cell.column;
+
+            if(isZeroAndNextToSelectedCell(previousBoardCell, cell)) {
+              console.log(previousBoardCell)
+            }
           return {
             ...previousBoardCell,
-            isOpen: isTheCellSelected || previousBoardCell.isOpen,
+            isOpen: isTheCellSelected || previousBoardCell.isOpen || isZeroAndNextToSelectedCell(previousBoardCell, cell),
           };
         });
       });
